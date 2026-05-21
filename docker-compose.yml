@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: discord-bot-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - discord-network
+
+  discord-bot:
+    build: .
+    container_name: discord-bot-main
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/discord-bot-studio
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    networks:
+      - discord-network
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: discord-bot-dashboard
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - discord-bot
+    networks:
+      - discord-network
+    restart: unless-stopped
+
+networks:
+  discord-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
